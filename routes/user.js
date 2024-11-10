@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const User = require("../models/user")
 const Book = require("../models/book")
+const fetchUser = require("../middleware/fetchUser")
 
 /********************************* Get user information ***************************/
 
-router.get("/user", async (req, res) => {
+router.get("/userDetails", fetchUser,async (req, res) => {
     try {
-      const userId = req.body.id;
+      const userId = req.user.id;
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
@@ -21,10 +22,10 @@ router.get("/user", async (req, res) => {
 
 /********************************* Find all the requests ***************************/
 
-router.get("/allRequests",async(req,res)=>{
+router.get("/allRequests",fetchUser,async(req,res)=>{
     try {
-        const userId = req.body.id;
-    
+        const userId = req.user.id;
+  
         const user = await User.findById(userId)
           .populate('requestHistory.bookId') 
           .populate('requestHistory.requestedBy', 'name') 
