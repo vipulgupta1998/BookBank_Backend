@@ -34,7 +34,6 @@ router.post('/register', async(req, res) => {
     success = true;
     const authtoken = jwt.sign(data,JWT_SECRET);
     res.json({success,authtoken});
-
   } catch (error) {
     console.error(error.message);
     res.status(500).send("some error occured");
@@ -77,6 +76,7 @@ router.post('/login',async(req,res)=>{
 router.post('/RequestPasswordChange',async(req,res)=>{
     const {email} = req.body;
     try {
+        let success = false;
         const user = await User.findOne({email : email});
         if(!user){
             return res.status(400).json({success,message : "user doesnot exists"})
@@ -95,8 +95,8 @@ router.post('/RequestPasswordChange',async(req,res)=>{
             createdAt: Date.now(),
           }).save();
         
-        const clientURL = "https://localhost:3000";
-        const link = `${clientURL}/passwordReset?token=${resetToken}&id=${user._id}`;
+        const clientURL = "http://localhost:3000";
+        const link = `${clientURL}/#/ResetPassword/passwordReset?token=${resetToken}&id=${user._id}`;
 
         const Password = process.env.GOOGLEPASSWORD;
         const transporter = nodemailer.createTransport({
@@ -113,7 +113,7 @@ router.post('/RequestPasswordChange',async(req,res)=>{
             subject: 'Password reset request',
             html: `
     <p>Hello,</p>
-    <p>Your Book Bank password reset link is : <a>${link}</a>.</p>
+    <p>Your Book Bank password reset link is : <a href="${link}">Reset Password</a> .</p>
     <p>Thank you,<br>Book Bank Team</p>
   `,
         };

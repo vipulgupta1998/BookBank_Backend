@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Book = require("../models/book")
+const User = require("../models/user")
+const fetchUser = require("../middleware/fetchUser")
 
 /********************************* Find all books ***************************/
 
@@ -82,7 +84,7 @@ router.post("/listBook",async(req,res)=>{
 
 /********************************* Delete the book ***************************/
 
-router.delete("/deleteBook",async(req,res)=>{
+router.delete("/deleteBook/:params",async(req,res)=>{
     try {
         const { id } = req.params;
         const deletedBook = await Book.findByIdAndDelete(id);
@@ -97,32 +99,35 @@ router.delete("/deleteBook",async(req,res)=>{
 
 /********************************* Request Book ***************************/
 
-router.post("/requestBook",async(req,res)=>{
+router.post("/requestBook",fetchUser,async(req,res)=>{
    try {
-    const { bookId, completed = false, requestedBy, message } = req.body;
+    const { bookId } = req.body;
+    const requestedBy = req.user.id;
     const book = await Book.findById(bookId);
+    let success = false;
     if (!book) {
-      return res.status(404).json({ message: 'Book not found' });
+      return res.status(404).json({success, message: 'Book not found' });
     }
-    const ownerId = book.owner;
-
+    if(book.requestedBy != null){
+      return res.status(404).json({success,message:"Book already requested"});
+    }
+    const ownerId = book.owner.toString();
     const owner = await User.findById(ownerId);
     if (!owner) {
-      return res.status(404).json({ message: 'Owner not found' });
+      return res.status(404).json({success,message: 'Owner not found' });
     }
-
     owner.requestHistory.push({
-      completed,
       bookId,
-      requestedBy,
-      message
+      requestedBy
     });
     await owner.save();
-    res.status(200).json({ message: 'Request added to owner\'s request history successfully.' });
+    book.requestedBy = ownerId;
+    await book.save();
+    success = true;
+    res.status(200).json({success, message: 'Request added to owner\'s request history successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error processing request', error });
   }
-
 })
 
 /********************************* Give permission to request ***************************/

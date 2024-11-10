@@ -12,9 +12,10 @@ app.use(cors());
 app.use(express.json());
 
 
-app.get("/",(req,res)=>{
+app.get("/start",(req,res)=>{
   res.json({message:"connection established"});
 })
+
 
 
 app.use('/auth',require('./routes/auth'));
